@@ -55,7 +55,12 @@ def get_engine():
     if not database_url:
         # Fallback to SQLite for development
         database_url = 'sqlite:///landing_pages.db'
-    return create_engine(database_url)
+    
+    # Fix for Render.com: postgres:// -> postgresql://
+    if database_url.startswith('postgres://'):
+        database_url = database_url.replace('postgres://', 'postgresql://', 1)
+    
+    return create_engine(database_url, pool_pre_ping=True)
 
 
 def init_db():

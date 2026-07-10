@@ -1,0 +1,11 @@
+# Alternative requirements for Render.com
+# Use this if psycopg2-binary causes issues
+
+Flask==3.0.3
+python-dotenv==1.0.1
+openai==1.51.2
+httpx==0.27.2
+gunicorn==22.0.0
+SQLAlchemy==2.0.36
+psycopg2==2.9.10
+requests==2.31.0
