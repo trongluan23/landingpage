@@ -37,12 +37,26 @@ app.config["JSON_AS_ASCII"] = False
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("landing-generator")
 
-# Initialize database
+# Initialize database - auto-create tables if not exist
 try:
+    logger.info("Connecting to database...")
     init_db()
-    logger.info("Database initialized successfully")
+    logger.info("✅ Database connected and initialized successfully")
+    
+    # Test database connection
+    from sqlalchemy import text
+    session = get_session()
+    try:
+        # Try a simple query to verify connection
+        session.execute(text("SELECT 1"))
+        logger.info("✅ Database connection test passed")
+    except Exception as e:
+        logger.warning(f"Database connection test failed: {e}")
+    finally:
+        session.close()
 except Exception as e:
-    logger.error(f"Database initialization failed: {e}")
+    logger.error(f"❌ Database initialization failed: {e}")
+    logger.info("App will continue but database features may not work")
 
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 OPENAI_MODEL = os.getenv("OPENAI_MODEL", "gpt-4o-mini")

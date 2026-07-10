@@ -2,10 +2,12 @@
 Database models for Landing Page Generator
 """
 from datetime import datetime
-from sqlalchemy import create_engine, Column, Integer, String, Text, DateTime
+from sqlalchemy import create_engine, Column, Integer, String, Text, DateTime, text
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
+from sqlalchemy.exc import OperationalError
 import os
+import sys
 
 Base = declarative_base()
 
@@ -52,22 +54,77 @@ class LandingPage(Base):
 def get_engine():
     """Create database engine from environment variable"""
     database_url = os.getenv('DATABASE_URL')
+    
     if not database_url:
-        # Fallback to SQLite for development
+        print("⚠️  DATABASE_URL not set, using SQLite", file=sys.stderr)
         database_url = 'sqlite:///landing_pages.db'
     
-    # Fix for Render.com: postgres:// -> postgresql://
+    # Fix for Render.com and Heroku: postgres:// -> postgresql://
     if database_url.startswith('postgres://'):
         database_url = database_url.replace('postgres://', 'postgresql://', 1)
+        print(f"🔧 Converted postgres:// to postgresql://", file=sys.stderr)
     
-    return create_engine(database_url, pool_pre_ping=True)
+    # Show connection info (hide password)
+    if 'postgresql://' in database_url:
+        try:
+            # Parse to hide password in logs
+            from urllib.parse import urlparse
+            parsed = urlparse(database_url)
+            safe_url = f"{parsed.scheme}://{parsed.username}:****@{parsed.hostname}:{parsed.port}{parsed.path}"
+            print(f"🔌 Connecting to: {safe_url}", file=sys.stderr)
+        except:
+            print(f"🔌 Connecting to PostgreSQL", file=sys.stderr)
+    else:
+        print(f"🔌 Connecting to: {database_url}", file=sys.stderr)
+    
+    try:
+        engine = create_engine(
+            database_url,
+            pool_pre_ping=True,  # Verify connections before using
+            pool_recycle=3600,   # Recycle connections after 1 hour
+            echo=False           # Set to True for SQL debugging
+        )
+        
+        # Test connection (SQLAlchemy 2.0 compatible)
+        with engine.connect() as conn:
+            conn.execute(text("SELECT 1"))
+        
+        print(f"✅ Database connection successful", file=sys.stderr)
+        return engine
+        
+    except OperationalError as e:
+        print(f"❌ Database connection failed: {e}", file=sys.stderr)
+        
+        # If PostgreSQL fails, try SQLite as fallback
+        if 'postgresql://' in database_url or 'postgres://' in database_url:
+            print(f"⚠️  Falling back to SQLite...", file=sys.stderr)
+            fallback_url = 'sqlite:///landing_pages.db'
+            return create_engine(fallback_url, pool_pre_ping=True)
+        else:
+            raise
+    except Exception as e:
+        print(f"❌ Unexpected database error: {e}", file=sys.stderr)
+        raise
 
 
 def init_db():
-    """Initialize database tables"""
-    engine = get_engine()
-    Base.metadata.create_all(engine)
-    return engine
+    """
+    Initialize database tables
+    - Auto-creates tables if they don't exist
+    - Safe to run multiple times
+    """
+    try:
+        engine = get_engine()
+        
+        print(f"📋 Creating tables if not exist...", file=sys.stderr)
+        Base.metadata.create_all(engine)
+        
+        print(f"✅ Tables ready", file=sys.stderr)
+        return engine
+        
+    except Exception as e:
+        print(f"❌ Table creation failed: {e}", file=sys.stderr)
+        raise
 
 
 def get_session():
@@ -75,3 +132,4 @@ def get_session():
     engine = get_engine()
     Session = sessionmaker(bind=engine)
     return Session()
+
