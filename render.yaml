@@ -1,0 +1,31 @@
+services:
+  # Web Service
+  - type: web
+    name: pageforge
+    env: python
+    region: oregon
+    plan: free
+    branch: main
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn app:app
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.0
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: OPENAI_MODEL
+        value: gpt-4o-mini
+      - key: SECRET_KEY
+        generateValue: true
+      - key: DATABASE_URL
+        fromDatabase:
+          name: pageforge-db
+          property: connectionString
+
+# Database
+databases:
+  - name: pageforge-db
+    databaseName: landing_pages
+    user: pageforge
+    region: oregon
+    plan: free

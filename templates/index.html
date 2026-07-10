@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PageForge — Tạo Landing Page bằng AI</title>
+<meta name="description" content="Nhập một câu mô tả, nhận về một landing page hoàn chỉnh, sẵn sàng sử dụng.">
+
+<!-- Fonts -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+<!-- Bootstrap -->
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+
+<link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+
+<div class="app-shell">
+
+  <!-- Top bar -->
+  <header class="topbar">
+    <div class="topbar__brand">
+      <span class="brand-mark" aria-hidden="true">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+          <path d="M4 12L10 6M4 12L10 18M4 12H14M20 6V18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </span>
+      <span class="brand-name">PageForge</span>
+      <span class="brand-tag">prompt → landing page</span>
+    </div>
+    <div class="topbar__status">
+      <a href="/gallery" class="btn-topbar" style="margin-right: 16px;">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+          <rect x="3" y="3" width="7" height="7" rx="1" stroke="currentColor" stroke-width="2"/>
+          <rect x="14" y="3" width="7" height="7" rx="1" stroke="currentColor" stroke-width="2"/>
+          <rect x="3" y="14" width="7" height="7" rx="1" stroke="currentColor" stroke-width="2"/>
+          <rect x="14" y="14" width="7" height="7" rx="1" stroke="currentColor" stroke-width="2"/>
+        </svg>
+        Quản lý
+      </a>
+      {% if configured %}
+        <span class="status-pill status-pill--ok"><i class="dot"></i>API đã sẵn sàng</span>
+      {% else %}
+        <span class="status-pill status-pill--warn"><i class="dot"></i>Chưa cấu hình OPENAI_API_KEY</span>
+      {% endif %}
+    </div>
+  </header>
+
+  <div class="app-body">
+
+    <!-- Left control panel -->
+    <aside class="panel">
+      <form id="generator-form">
+
+        <div class="field-group">
+          <label for="prompt" class="field-label">Mô tả landing page bạn muốn tạo</label>
+          <textarea id="prompt" class="field-textarea" rows="6" required
+            placeholder="Ví dụ: Landing page cho app học tiếng Anh bằng AI, hướng tới người đi làm bận rộn, tông màu năng động, có phần bảng giá và đánh giá học viên..."></textarea>
+          <div class="field-hint"><span id="char-count">0</span>/4000 ký tự</div>
+        </div>
+
+        <div class="field-row">
+          <div class="field-group field-group--half">
+            <label for="industry" class="field-label">Lĩnh vực</label>
+            <input type="text" id="industry" class="field-input" placeholder="SaaS, F&B, giáo dục...">
+          </div>
+          <div class="field-group field-group--half">
+            <label for="language" class="field-label">Ngôn ngữ nội dung</label>
+            <select id="language" class="field-select">
+              <option value="Tiếng Việt" selected>Tiếng Việt</option>
+              <option value="English">English</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="field-group">
+          <label class="field-label">Phong cách thiết kế</label>
+          <div class="chip-group" id="style-chips">
+            <button type="button" class="chip is-active" data-value="auto">Tự động chọn</button>
+            <button type="button" class="chip" data-value="Hiện đại, tối giản (minimal)">Tối giản</button>
+            <button type="button" class="chip" data-value="Sang trọng, cao cấp (premium/luxury)">Sang trọng</button>
+            <button type="button" class="chip" data-value="Trẻ trung, năng động, nhiều màu sắc">Trẻ trung</button>
+            <button type="button" class="chip" data-value="Công nghệ, dark mode, futuristic">Dark / Tech</button>
+            <button type="button" class="chip" data-value="Ấm áp, thủ công, gần gũi (organic/handmade)">Ấm áp</button>
+          </div>
+        </div>
+
+        <div class="field-group">
+          <label class="field-label">
+            <input type="checkbox" id="auto-layout" checked class="field-checkbox"> 
+            Tự động chọn bố cục tốt nhất dựa trên nội dung
+          </label>
+          <div class="field-hint">AI sẽ phân tích prompt và chọn layout phù hợp nhất</div>
+        </div>
+
+        <div class="field-group" id="manual-layout-group" style="display: none;">
+          <label for="layout" class="field-label">Chọn bố cục thủ công</label>
+          <select id="layout" class="field-select">
+            <option value="classic">Classic - Bố cục truyền thống</option>
+            <option value="split-hero">Split Hero - Hero chia đôi</option>
+            <option value="minimal-centered">Minimal Centered - Tập trung giữa</option>
+            <option value="magazine">Magazine - Nhiều cột</option>
+            <option value="asymmetric">Asymmetric - Bất đối xứng</option>
+            <option value="product-showcase">Product Showcase - Tập trung sản phẩm</option>
+            <option value="storytelling">Storytelling - Kể chuyện</option>
+            <option value="dashboard-preview">Dashboard Preview - Preview app</option>
+          </select>
+        </div>
+
+        <div class="field-group">
+          <label for="color" class="field-label">Tông màu ưu tiên <span class="field-optional">(tuỳ chọn)</span></label>
+          <input type="text" id="color" class="field-input" placeholder="VD: xanh navy + cam, đen + vàng gold...">
+          <div class="field-hint">Để trống để AI tự chọn màu phù hợp</div>
+        </div>
+
+        <div class="field-group">
+          <label for="cta" class="field-label">Hành động chính (CTA) <span class="field-optional">(tuỳ chọn)</span></label>
+          <input type="text" id="cta" class="field-input" placeholder="VD: Đăng ký dùng thử miễn phí">
+        </div>
+
+        <div class="field-group">
+          <label for="logo" class="field-label">Logo (URL) <span class="field-optional">(tuỳ chọn)</span></label>
+          <input type="url" id="logo" class="field-input" placeholder="VD: https://example.com/logo.png">
+          <div class="field-hint">Nhập URL logo của bạn (hoặc để trống sẽ dùng logo văn bản)</div>
+        </div>
+
+        <div class="field-group">
+          <label for="heroImage" class="field-label">Hình ảnh Hero <span class="field-optional">(tuỳ chọn)</span></label>
+          <input type="url" id="heroImage" class="field-input" placeholder="VD: https://images.unsplash.com/photo-...">
+          <div class="field-hint">Nhập URL hình ảnh chính cho phần hero (hoặc để trống AI sẽ tự chọn)</div>
+        </div>
+
+        <div class="field-group">
+          <label class="field-label">Hình ảnh bổ sung <span class="field-optional">(tuỳ chọn)</span></label>
+          <div id="additional-images">
+            <div class="image-url-row">
+              <input type="url" class="field-input additional-image-input" placeholder="URL hình ảnh 1">
+            </div>
+            <div class="image-url-row">
+              <input type="url" class="field-input additional-image-input" placeholder="URL hình ảnh 2">
+            </div>
+            <div class="image-url-row">
+              <input type="url" class="field-input additional-image-input" placeholder="URL hình ảnh 3">
+            </div>
+          </div>
+          <div class="field-hint">Các hình ảnh này sẽ được sử dụng trong features, testimonials, v.v.</div>
+        </div>
+
+        <button type="submit" class="btn-generate" id="generate-btn">
+          <span class="btn-generate__label">Tạo landing page</span>
+          <span class="btn-generate__spinner" aria-hidden="true"></span>
+        </button>
+
+        <p class="panel-note">AI sẽ tạo 1 trang HTML hoàn chỉnh (Tailwind CDN), có thể tải về và dùng ngay.</p>
+      </form>
+    </aside>
+
+    <!-- Right preview area -->
+    <main class="preview-area">
+
+      <div class="preview-toolbar">
+        <div class="tabs" role="tablist">
+          <button class="tab is-active" data-tab="preview" role="tab">Xem trước</button>
+          <button class="tab" data-tab="code" role="tab">Mã HTML</button>
+        </div>
+        <div class="preview-actions">
+          <select id="viewport-select" class="viewport-select" title="Kích thước xem trước">
+            <option value="full">Desktop</option>
+            <option value="tablet">Tablet</option>
+            <option value="mobile">Mobile</option>
+          </select>
+          <button class="icon-btn" id="copy-btn" title="Sao chép mã HTML" disabled>Sao chép</button>
+          <button class="icon-btn" id="newtab-btn" title="Mở trong tab mới" disabled>Mở tab mới</button>
+          <button class="icon-btn icon-btn--primary" id="download-btn" title="Tải file HTML" disabled>Tải xuống</button>
+        </div>
+      </div>
+
+      <div class="browser-frame" id="browser-frame">
+        <div class="browser-frame__bar">
+          <span class="dot dot--red"></span>
+          <span class="dot dot--yellow"></span>
+          <span class="dot dot--green"></span>
+          <span class="browser-frame__url">your-landing-page.html</span>
+        </div>
+
+        <div class="browser-frame__body" id="viewport-wrapper">
+
+          <!-- Empty state -->
+          <div class="empty-state" id="empty-state">
+            <div class="empty-state__glyph">
+              <svg width="40" height="40" viewBox="0 0 24 24" fill="none">
+                <rect x="3" y="4" width="18" height="14" rx="2" stroke="currentColor" stroke-width="1.6"/>
+                <path d="M3 9H21" stroke="currentColor" stroke-width="1.6"/>
+                <circle cx="6" cy="6.5" r="0.6" fill="currentColor"/>
+                <circle cx="8" cy="6.5" r="0.6" fill="currentColor"/>
+              </svg>
+            </div>
+            <p class="empty-state__title">Chưa có landing page nào được tạo</p>
+            <p class="empty-state__desc">Điền mô tả ở bên trái và nhấn "Tạo landing page" để bắt đầu.</p>
+          </div>
+
+          <!-- Loading state -->
+          <div class="loading-state" id="loading-state" hidden>
+            <div class="loading-bar"></div>
+            <p class="loading-state__text" id="loading-text">Đang phân tích yêu cầu...</p>
+          </div>
+
+          <!-- Error state -->
+          <div class="error-state" id="error-state" hidden>
+            <p class="error-state__title">Không thể tạo trang</p>
+            <p class="error-state__desc" id="error-text"></p>
+          </div>
+
+          <iframe id="preview-frame" class="preview-frame" title="Xem trước landing page" hidden></iframe>
+          <pre id="code-view" class="code-view" hidden><code id="code-content"></code></pre>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+
+<script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>
